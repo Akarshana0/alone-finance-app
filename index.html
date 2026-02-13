@@ -1,0 +1,2003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alone Management - Pro Finance V3</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b0e14">
+<link rel="apple-touch-icon" href="https://files.catbox.moe/lelq4r.jpeg">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Outfit', 'sans-serif'] },
+                    colors: {
+                        dark: '#0b0e14',
+                        card: '#151b23',
+                        primary: '#3b82f6',
+                        secondary: '#6366f1',
+                        success: '#10b981',
+                        danger: '#ef4444',
+                        warning: '#f59e0b',
+                        info: '#06b6d4',
+                        purple: '#8b5cf6',
+                        textMain: '#e2e8f0',
+                        textMuted: '#94a3b8'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #0b0e14; color: #e2e8f0; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #151b23; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        
+        .fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .nav-item.active { background: linear-gradient(90deg, rgba(59,130,246,0.15) 0%, transparent 100%); border-left: 3px solid #3b82f6; color: #60a5fa; }
+        .glass-panel { background: rgba(21, 27, 35, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+
+        .toast { transform: translateX(100%); transition: transform 0.3s ease-in-out; }
+        .toast.show { transform: translateX(0); }
+    /* Light Mode Overrides */
+body.light-mode { background-color: #f8fafc; color: #1e293b; }
+
+.light-mode aside, 
+.light-mode .bg-card, 
+.light-mode header,
+.light-mode #mobile-menu { background-color: #ffffff !important; border-color: #e2e8f0 !important; }
+
+.light-mode main, 
+.light-mode .bg-dark, 
+.light-mode section { background-color: #f8fafc !important; }
+
+.light-mode .text-white, 
+.light-mode .text-slate-200, 
+.light-mode .text-slate-300 { color: #1e293b !important; }
+
+.light-mode .text-textMuted { color: #64748b !important; }
+
+.light-mode .border-slate-800, 
+.light-mode .border-slate-700, 
+.light-mode .divide-slate-800 { border-color: #e2e8f0 !important; }
+
+.light-mode input, 
+.light-mode select { background-color: #ffffff !important; border-color: #cbd5e1 !important; color: #1e293b !important; }
+
+.light-mode .nav-item:hover { background-color: #f1f5f9 !important; }
+.light-mode .bg-slate-800\/50 { background-color: #f1f5f9 !important; }
+</style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden selection:bg-primary selection:text-white">
+
+  <div id="login-screen" class="fixed inset-0 z-50 bg-dark hidden flex flex-col items-center justify-center p-4">
+    <div class="glass-panel p-8 rounded-2xl shadow-2xl w-full max-w-md border border-slate-800 text-center fade-in">
+        <div class="w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-xl mx-auto flex items-center justify-center text-white text-3xl font-bold mb-6 shadow-lg shadow-primary/30">A</div>
+        <h1 class="text-3xl font-bold mb-2" data-translate="welcome">Welcome Back</h1>
+        <p class="text-textMuted mb-8" data-translate="subtitle">Secure Personal Finance Management</p>
+        
+        <form id="login-form" class="space-y-4">
+            <div>
+                <input type="password" id="login-pin" placeholder="Enter PIN" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-center text-xl tracking-widest focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition" maxlength="4">
+            </div>
+            <button type="submit" class="w-full bg-primary hover:bg-blue-600 text-white font-semibold py-3 rounded-xl transition shadow-lg shadow-primary/20">
+                Unlock Dashboard
+            </button>
+            <button type="button" id="btn-bio-unlock" onclick="verifyBiometric()" class="hidden w-full bg-slate-800 hover:bg-slate-700 text-success border border-slate-700 font-semibold py-3 rounded-xl transition mt-3 flex items-center justify-center gap-2">
+    <i class="fa-solid fa-fingerprint text-xl"></i> Unlock with Biometrics
+</button>
+
+        </form>
+    </div>
+</div>
+
+
+    <div id="toast-container" class="fixed top-5 right-5 z-[60] flex flex-col gap-2"></div>
+
+    <div id="app-container" class="hidden flex-1 flex h-screen overflow-hidden">
+        
+        <aside class="w-64 bg-card hidden md:flex flex-col border-r border-slate-800/50">
+            <div class="p-6 flex items-center gap-3">
+                <div class="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center text-white font-bold shadow-lg">A</div>
+                <h1 class="text-lg font-bold tracking-wide">Alone<span class="text-primary font-light">Mgt</span></h1>
+            </div>
+
+<nav class="flex-1 px-3 space-y-1 mt-4">
+    <button onclick="nav('dashboard')" id="nav-dashboard" class="nav-item active w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800/50 transition-all text-sm font-medium">
+        <i class="fa-solid fa-grid-2 w-5 text-center"></i> 
+        <span data-translate="nav_dashboard">Dashboard</span>
+    </button>
+    <button onclick="nav('wallet')" id="nav-wallet" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800/50 transition-all text-sm font-medium">
+        <i class="fa-solid fa-wallet w-5 text-center"></i> 
+        <span data-translate="nav_wallet">Transactions</span>
+    </button>
+    <button onclick="nav('loans')" id="nav-loans" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800/50 transition-all text-sm font-medium">
+        <i class="fa-solid fa-credit-card w-5 text-center"></i> 
+        <span data-translate="nav_loans">Loans & Credit</span>
+    </button>
+    <button onclick="nav('trips')" id="nav-trips" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800/50 transition-all text-sm font-medium">
+        <i class="fa-solid fa-plane-departure w-5 text-center"></i> 
+        <span data-translate="nav_trips">Trip Planner</span>
+    </button>
+    <button onclick="nav('savings')" id="nav-savings" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800/50 transition-all text-sm font-medium">
+        <i class="fa-solid fa-piggy-bank w-5 text-center"></i> 
+        <span data-translate="nav_savings">Savings Goals</span>
+    </button>
+    <button onclick="nav('reports')" id="nav-reports" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800/50 transition-all text-sm font-medium">
+        <i class="fa-solid fa-chart-pie w-5 text-center"></i> 
+        <span data-translate="nav_reports">Analytics</span>
+    </button>
+    <div class="pt-4 mt-4 border-t border-slate-800">
+        <button onclick="nav('settings')" id="nav-settings" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-slate-800/50 transition-all text-sm font-medium">
+            <i class="fa-solid fa-gear w-5 text-center"></i> 
+            <span data-translate="nav_settings">Settings</span>
+        </button>
+    </div>
+</nav>
+
+            <div class="p-4">
+             <button onclick="logout()" class="w-full flex items-center justify-center gap-2 text-danger hover:bg-danger/10 py-2 rounded-lg transition text-xs font-bold uppercase tracking-wider">
+    <i class="fa-solid fa-power-off"></i> 
+    <span data-translate="nav_lock">Lock App</span>
+</button>
+   
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col h-screen overflow-hidden bg-dark relative">
+            
+            <header class="md:hidden bg-card/80 backdrop-blur-md p-4 flex justify-between items-center border-b border-slate-800 sticky top-0 z-20">
+                <span class="font-bold">Alone<span class="text-primary">Mgt</span></span>
+                <button onclick="toggleMobileMenu()" class="text-slate-200"><i class="fa-solid fa-bars text-xl"></i></button>
+            </header>
+
+           <div id="mobile-menu" class="fixed inset-0 bg-dark/95 z-50 hidden flex-col justify-center items-center space-y-8 md:hidden fade-in">
+    <button onclick="nav('dashboard')" class="text-xl font-medium">Dashboard</button>
+    <button onclick="nav('wallet')" class="text-xl font-medium">Transactions</button>
+    <button onclick="nav('loans')" class="text-xl font-medium">Loans & Credit</button>
+    <button onclick="nav('trips')" class="text-xl font-medium">Trips</button>
+    <button onclick="nav('savings')" class="text-xl font-medium">Savings</button>
+    <button onclick="nav('reports')" class="text-xl font-medium">Reports</button>
+    <button onclick="nav('settings')" class="text-xl font-medium">Settings</button>
+    <button onclick="toggleMobileMenu()" class="text-danger mt-8"><i class="fa-solid fa-xmark"></i> Close</button>
+</div>
+ 
+            <div class="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth">
+                
+                <section id="dashboard" class="fade-in block space-y-6 max-w-6xl mx-auto">
+                    <div class="flex flex-col md:flex-row justify-between md:items-center gap-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-white">Dashboard</h2>
+                            <p class="text-textMuted text-sm">Overview of your financial health.</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="openModal('transaction')" class="bg-primary hover:bg-blue-600 text-white px-5 py-2 rounded-lg shadow-lg shadow-primary/20 transition text-sm font-medium flex items-center gap-2">
+                                <i class="fa-solid fa-plus"></i> New Transaction
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-gradient-to-br from-slate-800 to-slate-900 p-6 rounded-2xl border border-slate-700/50 shadow-lg relative overflow-hidden">
+                            <div class="absolute right-0 top-0 w-32 h-32 bg-primary/10 rounded-bl-full -mr-6 -mt-6"></div>
+                            <p class="text-textMuted text-sm font-medium mb-1" data-translate="total_balance">Total Balance</p>
+                            <h3 class="text-4xl font-bold text-white tracking-tight mt-2" id="dash-balance">0.00</h3>
+                            <div class="mt-4 flex items-center gap-2 text-xs text-primary bg-primary/10 w-fit px-2 py-1 rounded">
+                                <i class="fa-solid fa-wallet"></i> Cash In Hand
+                            </div>
+                        </div>
+                        
+                        <div class="bg-card p-6 rounded-2xl border border-slate-800 shadow-sm">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-10 h-10 rounded-full bg-success/10 text-success flex items-center justify-center"><i class="fa-solid fa-arrow-down-long"></i></div>
+                                <div>
+                                    <p class="text-textMuted text-xs uppercase tracking-wider font-bold" data-translate="income">Income</p>
+                                    <h3 class="text-2xl font-bold text-success" id="dash-income">0.00</h3>
+                                </div>
+                            </div>
+                            <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                                <div class="bg-success h-full" style="width: 100%"></div> </div>
+                            <p class="text-xs text-textMuted mt-2" data-translate="accumulated">Total Accumulated</p>
+                        </div>
+
+                        <div class="bg-card p-6 rounded-2xl border border-slate-800 shadow-sm">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-10 h-10 rounded-full bg-danger/10 text-danger flex items-center justify-center"><i class="fa-solid fa-arrow-up-long"></i></div>
+                                <div>
+                                    <p class="text-textMuted text-xs uppercase tracking-wider font-bold" data-translate="expenses">Expenses</p>
+                                    <h3 class="text-2xl font-bold text-danger" id="dash-expense">0.00</h3>
+                                </div>
+                            </div>
+                            <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                                <div class="bg-danger h-full" id="dash-expense-bar" style="width: 0%"></div>
+                            </div>
+                            <p class="text-xs text-textMuted mt-2" id="dash-budget-status">0% of Budget used</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-card rounded-2xl border border-slate-800 p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-bold text-white" data-translate="recent_activity">Recent Activity</h3>
+                            <button onclick="nav('wallet')" class="text-sm text-primary hover:text-blue-400">View All</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="text-xs text-textMuted uppercase bg-slate-800/50 rounded-lg">
+                                    <tr>
+                                        <th class="py-3 px-4 rounded-l-lg">Date</th>
+                                        <th class="py-3 px-4">Category</th>
+                                        <th class="py-3 px-4">Note</th>
+                                        <th class="py-3 px-4 text-right rounded-r-lg">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recent-list" class="text-sm divide-y divide-slate-800">
+                                    </tbody>
+                            </table>
+                            <div id="dash-empty" class="hidden text-center py-8 text-textMuted text-sm">No recent transactions found.</div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="wallet" class="fade-in hidden space-y-6 max-w-6xl mx-auto">
+                    <h2 class="text-2xl font-bold text-white">Transaction History</h2>
+                    <div class="bg-card p-6 rounded-2xl border border-slate-800">
+                        <div class="flex flex-col md:flex-row justify-between mb-4 gap-3">
+                            <input type="text" id="search-tx" onkeyup="renderTransactions()" data-translate="search_placeholder" placeholder="Search by note or category..." class="bg-dark border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:border-primary focus:outline-none w-full md:w-64">
+                            <button onclick="openModal('transaction')" class="bg-primary/20 text-primary hover:bg-primary/30 px-4 py-2 rounded-lg text-sm font-medium">Add New</button>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2 mb-4 bg-slate-800/30 p-3 rounded-xl border border-slate-700/50">
+    <div class="flex-1">
+        <label class="text-[10px] text-textMuted uppercase block mb-1">Start Date</label>
+        <input type="date" id="filter-start" onchange="renderTransactions()" class="w-full bg-dark border border-slate-700 rounded-lg px-3 py-2 text-white text-xs focus:border-primary focus:outline-none">
+    </div>
+    <div class="text-slate-500 pt-4"><i class="fa-solid fa-arrow-right"></i></div>
+    <div class="flex-1">
+        <label class="text-[10px] text-textMuted uppercase block mb-1">End Date</label>
+        <input type="date" id="filter-end" onchange="renderTransactions()" class="w-full bg-dark border border-slate-700 rounded-lg px-3 py-2 text-white text-xs focus:border-primary focus:outline-none">
+    </div>
+    <div class="pt-4">
+        <button onclick="clearDateFilter()" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded-lg text-xs transition" title="Clear Dates">
+            <i class="fa-solid fa-filter-circle-xmark"></i>
+        </button>
+    </div>
+</div>
+
+                        <ul id="full-list" class="space-y-3"></ul>
+                    </div>
+                </section>
+
+                <section id="loans" class="fade-in hidden space-y-6 max-w-6xl mx-auto">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-white">Loans & Credit Cards</h2>
+                            <p class="text-textMuted text-sm">Track your debts and repayment progress.</p>
+                        </div>
+                        <button onclick="openModal('loan')" class="bg-purple hover:bg-purple-600 text-white px-5 py-2 rounded-lg shadow-lg shadow-purple/20 transition text-sm font-medium flex items-center gap-2">
+                            <i class="fa-solid fa-plus"></i> Add Loan/Card
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-card p-6 rounded-2xl border border-slate-800 relative overflow-hidden">
+                            <div class="absolute right-0 top-0 w-24 h-24 bg-danger/10 rounded-bl-full -mr-4 -mt-4"></div>
+                            <h3 class="text-textMuted text-sm font-medium">Total Outstanding Debt</h3>
+                            <h2 class="text-3xl font-bold text-danger mt-1" id="loan-total-debt">0.00</h2>
+                            <p class="text-xs text-textMuted mt-2">Principal + Interest remaining</p>
+                        </div>
+                        <div class="bg-card p-6 rounded-2xl border border-slate-800 relative overflow-hidden">
+                            <div class="absolute right-0 top-0 w-24 h-24 bg-warning/10 rounded-bl-full -mr-4 -mt-4"></div>
+                            <h3 class="text-textMuted text-sm font-medium">Monthly Liability (Installments)</h3>
+                            <h2 class="text-3xl font-bold text-warning mt-1" id="loan-monthly-liability">0.00</h2>
+                            <p class="text-xs text-textMuted mt-2">Total needed per month</p>
+                        </div>
+                    </div>
+
+                    <div id="loans-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        </div>
+                    
+                    <div id="no-loans" class="hidden text-center py-12 text-slate-500 border border-dashed border-slate-700 rounded-2xl">
+                        <i class="fa-solid fa-sack-dollar text-4xl mb-3 opacity-50"></i>
+                        <p>You are debt-free! Or add a loan to track.</p>
+                    </div>
+                </section>
+
+                <section id="trips" class="fade-in hidden space-y-6 max-w-6xl mx-auto">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold text-white">Trip & Event Planner</h2>
+                            <p class="text-textMuted text-sm">Manage separate budgets for your journeys.</p>
+                        </div>
+                        <button onclick="openModal('trip')" class="bg-secondary hover:bg-indigo-600 text-white px-5 py-2 rounded-lg shadow-lg shadow-secondary/20 transition text-sm font-medium">
+                            <i class="fa-solid fa-plus mr-2"></i> Create Trip
+                        </button>
+                    </div>
+                    <div id="trips-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                    <div id="no-trips" class="hidden text-center py-12 text-slate-500 border border-dashed border-slate-700 rounded-2xl">
+                        <i class="fa-solid fa-map-location-dot text-4xl mb-3 opacity-50"></i>
+                        <p>No active trips. Plan your next adventure!</p>
+                    </div>
+                </section>
+
+                <section id="savings" class="fade-in hidden space-y-6 max-w-6xl mx-auto">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold text-white">Savings Goals</h2>
+                            <p class="text-textMuted text-sm">Save for your future dreams.</p>
+                        </div>
+                        <button onclick="openModal('saving')" class="bg-info hover:bg-cyan-600 text-white px-5 py-2 rounded-lg shadow-lg shadow-info/20 transition text-sm font-medium">
+                            <i class="fa-solid fa-plus mr-2"></i> New Goal
+                        </button>
+                    </div>
+                    <div id="savings-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                    <div id="no-savings" class="hidden text-center py-12 text-slate-500 border border-dashed border-slate-700 rounded-2xl">
+                        <i class="fa-solid fa-piggy-bank text-4xl mb-3 opacity-50"></i>
+                        <p>No savings goals. Start saving today!</p>
+                    </div>
+                </section>
+
+                <section id="reports" class="fade-in hidden space-y-6 max-w-6xl mx-auto">
+                    <div class="flex flex-col md:flex-row justify-between items-end gap-4 border-b border-slate-800 pb-4">
+                        <h2 class="text-2xl font-bold text-white">Financial Analytics</h2>
+                        <div class="flex gap-2">
+    <select id="report-range" onchange="updateReports()" class="bg-card border border-slate-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none">
+        <option value="this_month">This Month</option>
+        <option value="last_month">Last Month</option>
+        <option value="last_7">Last 7 Days</option>
+        <option value="last_3m">Last 3 Months</option>
+        <option value="all_time">All Time</option>
+    </select>
+
+    <button onclick="updateReports()" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded-lg text-sm">
+        <i class="fa-solid fa-rotate"></i>
+    </button>
+    
+    <button onclick="downloadReportPDF()" class="bg-danger hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm flex items-center gap-2">
+        <i class="fa-solid fa-file-pdf"></i> Export PDF
+    </button>
+</div>
+
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-card p-6 rounded-2xl border border-slate-800">
+                            <h4 class="font-bold text-slate-300 mb-4">Spending by Category</h4>
+                            <div class="h-64 flex justify-center">
+                                <canvas id="chartPie"></canvas>
+                            </div>
+                        </div>
+                        <div class="bg-card p-6 rounded-2xl border border-slate-800">
+                            <h4 class="font-bold text-slate-300 mb-4">Income vs Expense</h4>
+                            <div class="h-64">
+                                <canvas id="chartBar"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="settings" class="fade-in hidden space-y-6 max-w-2xl mx-auto">
+                    <h2 class="text-2xl font-bold text-white" data-translate="settings_title">Settings</h2>
+                    
+                    <div class="bg-card p-6 rounded-2xl border border-slate-800 space-y-6">
+                      <div>
+    <label class="block text-sm text-textMuted mb-2">Currency Symbol</label>
+    <select id="set-currency" class="w-full bg-dark border border-slate-700 rounded-lg px-4 py-3 text-white focus:border-primary focus:outline-none font-sans">
+        <option value="LKR">LKR - Rs (Sri Lanka)</option>
+        <option value="INR">INR - ₹ (India)</option>
+        <option value="PKR">PKR - Rs (Pakistan)</option>
+        <option value="MVR">MVR - Rf (Maldives)</option>
+        <option value="JPY">JPY - ¥ (Japan)</option>
+        <option value="CNY">CNY - ¥ (China)</option>
+        <option value="KRW">KRW - ₩ (South Korea)</option>
+        <option value="SGD">SGD - S$ (Singapore)</option>
+        <option value="MYR">MYR - RM (Malaysia)</option>
+        <option value="THB">THB - ฿ (Thailand)</option>
+        <option value="IDR">IDR - Rp (Indonesia)</option>
+        <option value="PHP">PHP - ₱ (Philippines)</option>
+        <option value="VND">VND - ₫ (Vietnam)</option>
+        <option value="AUD">AUD - $ (Australia)</option>
+        <option value="NZD">NZD - $ (New Zealand)</option>
+        
+        <option value="AED">AED - د.إ (UAE)</option>
+        <option value="SAR">SAR - ﷼ (Saudi Arabia)</option>
+        <option value="QAR">QAR - ر.ق (Qatar)</option>
+        <option value="KWD">KWD - د.ك (Kuwait)</option>
+        <option value="OMR">OMR - ر.ع. (Oman)</option>
+        <option value="BHD">BHD - .د.ب (Bahrain)</option>
+        <option value="TRY">TRY - ₺ (Turkey)</option>
+
+        <option value="USD">USD - $ (United States)</option>
+        <option value="CAD">CAD - $ (Canada)</option>
+        <option value="BRL">BRL - R$ (Brazil)</option>
+
+        <option value="EUR">EUR - € (Eurozone)</option>
+        <option value="GBP">GBP - £ (United Kingdom)</option>
+        <option value="CHF">CHF - CHF (Switzerland)</option>
+        <option value="RUB">RUB - ₽ (Russia)</option>
+        <option value="ZAR">ZAR - R (South Africa)</option>
+    </select>
+</div>
+
+<div class="bg-card p-6 rounded-2xl border border-slate-800 space-y-4 mb-6">
+    <h3 class="text-lg font-bold text-white border-b border-slate-800 pb-2" data-translate="language">Language</h3>
+    <div>
+        <label class="block text-sm text-textMuted mb-2" data-translate="select_lang">Select Interface Language</label>
+        <select id="set-language" onchange="changeLanguage(this.value)" class="w-full bg-dark border border-slate-700 rounded-lg px-4 py-3 text-white focus:border-primary focus:outline-none font-sans">
+            <option value="en">English (US)</option>
+            <option value="si">සිංහල (Sinhala)</option>
+            <option value="ta">தமிழ் (Tamil)</option>
+            <option value="hi">हिन्दी (Hindi)</option>
+        </select>
+    </div>
+</div>
+<div class="bg-card p-6 rounded-2xl border border-slate-800 space-y-4 mb-6">
+
+    <h3 class="text-lg font-bold text-white border-b border-slate-800 pb-2">Appearance</h3>
+    
+    <div class="flex items-center justify-between py-2">
+        <div>
+            <p class="text-sm font-medium text-white" data-translate="light_mode">Light Mode</p>
+            <p class="text-xs text-textMuted"></p>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="set-theme-light" onchange="toggleTheme()" class="sr-only peer">
+            <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+        </label>
+    </div>
+</div>
+
+                        <div>
+                            <label class="block text-sm text-textMuted mb-2" data-translate="budget_limit">Monthly Budget Limit</label>
+                            <input type="number" id="set-budget" class="w-full bg-dark border border-slate-700 rounded-lg px-4 py-3 text-white focus:border-primary focus:outline-none">
+                        </div>
+                    </div>
+<div class="bg-card p-6 rounded-2xl border border-slate-800 space-y-4 mb-6">
+    <h3 class="text-lg font-bold text-white border-b border-slate-800 pb-2">App Security</h3>
+    
+    <div class="flex items-center justify-between py-2">
+        <div>
+            <p class="text-sm font-medium text-white">Enable PIN Protection</p>
+            <p class="text-xs text-textMuted">Require PIN on startup</p>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="set-pin-enabled" onchange="toggleSecurity('pin')" class="sr-only peer">
+            <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+        </label>
+    </div>
+
+    <div class="flex items-center justify-between py-2">
+        <div>
+            <p class="text-sm font-medium text-white">Biometric Unlock</p>
+            <p class="text-xs text-textMuted">Use Fingerprint / Face ID</p>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="set-bio-enabled" onchange="toggleSecurity('bio')" class="sr-only peer">
+            <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-success"></div>
+        </label>
+    </div>
+</div>
+
+                    <div class="bg-card p-6 rounded-2xl border border-slate-800 space-y-4">
+                        <h3 class="text-lg font-bold text-white border-b border-slate-800 pb-2">Security</h3>
+                        <form id="form-change-pin" class="space-y-4">
+                            <div>
+                                <label class="block text-xs text-textMuted mb-1">Current PIN</label>
+                                <input type="password" id="pin-current" placeholder="Enter current PIN Default PIN is 1234" class="w-full bg-dark border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:border-primary focus:outline-none" maxlength="4">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs text-textMuted mb-1">New PIN</label>
+                                    <input type="password" id="pin-new" placeholder="4 Digits" class="w-full bg-dark border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:border-primary focus:outline-none" maxlength="4">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-textMuted mb-1">Confirm New PIN</label>
+                                    <input type="password" id="pin-confirm" placeholder="Repeat" class="w-full bg-dark border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:border-primary focus:outline-none" maxlength="4">
+                                </div>
+                            </div>
+                            <button type="submit" class="bg-slate-700 hover:bg-primary text-white px-4 py-2 rounded-lg text-sm transition">Update PIN</button>
+                        </form>
+                    </div>
+
+                    <div class="bg-card p-6 rounded-2xl border border-slate-800">
+                        <h4 class="text-white font-bold mb-4">Data Management</h4>
+                        <div class="space-y-4">
+                            <div class="flex flex-wrap gap-3">
+                                <button onclick="exportData()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm"><i class="fa-solid fa-download"></i> Export CSV</button>
+                                <button onclick="exportJSON()" class="bg-primary/20 hover:bg-primary/30 text-primary border border-primary/20 px-4 py-2 rounded-lg text-sm"><i class="fa-solid fa-file-export"></i> Backup (JSON)</button>
+                                <button onclick="clearData()" class="bg-danger/10 hover:bg-danger/20 text-danger border border-danger/20 px-4 py-2 rounded-lg text-sm">Reset All Data</button>
+                            </div>
+                            
+                            <div class="border-t border-slate-800 pt-4">
+                                <label class="block text-xs text-textMuted mb-2">Restore Backup (JSON File)</label>
+                                <div class="flex gap-2">
+                                    <input type="file" id="import-file" accept=".json" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-white hover:file:bg-slate-700">
+                                    <button onclick="importData()" class="bg-success/20 hover:bg-success/30 text-success px-4 py-2 rounded-lg text-xs font-bold uppercase">Import</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <div id="modal-transaction" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-card w-full max-w-md rounded-2xl border border-slate-700 shadow-2xl p-6 fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-white">Add Transaction</h3>
+                <button onclick="closeModal('transaction')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <form id="form-trans" class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="cursor-pointer">
+                        <input type="radio" name="t-type" value="expense" checked class="peer hidden">
+                        <div class="py-2 text-center rounded-lg border border-slate-600 text-slate-400 peer-checked:bg-danger peer-checked:text-white peer-checked:border-danger transition">Expense</div>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="t-type" value="income" class="peer hidden">
+                        <div class="py-2 text-center rounded-lg border border-slate-600 text-slate-400 peer-checked:bg-success peer-checked:text-white peer-checked:border-success transition">Income</div>
+                    </label>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+    <div>
+        <label class="block text-xs text-textMuted mb-1">Date</label>
+        <input type="date" id="t-date" required class="w-full bg-dark border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:border-primary focus:outline-none">
+    </div>
+    <div>
+        <label class="block text-xs text-textMuted mb-1">Time</label>
+        <input type="time" id="t-time" required class="w-full bg-dark border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:border-primary focus:outline-none">
+    </div>
+</div>
+
+                <div>
+                    <label class="block text-xs text-textMuted mb-1">Link to Goal/Trip (Optional)</label>
+                    <select id="t-trip-link" class="w-full bg-dark border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:border-primary focus:outline-none">
+                        <option value="">-- Personal Wallet --</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-textMuted mb-1">Amount</label>
+                    <input type="number" id="t-amount" step="0.01" required class="w-full bg-dark border border-slate-600 rounded-lg px-3 py-2 text-white focus:border-primary focus:outline-none text-lg font-bold">
+                </div>
+                <div>
+                    <label class="block text-xs text-textMuted mb-1">Category</label>
+                    <select id="t-category" class="w-full bg-dark border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:border-primary focus:outline-none">
+                        </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-textMuted mb-1">Note</label>
+                    <input type="text" id="t-note" placeholder="Short description" class="w-full bg-dark border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:border-primary focus:outline-none">
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="t-recurring" class="w-4 h-4 rounded bg-dark border-slate-600 focus:ring-primary">
+                    <label for="t-recurring" class="text-xs text-textMuted">Repeat Monthly (Recurring Bill)</label>
+                </div>
+                <button type="submit" class="w-full bg-primary hover:bg-blue-600 text-white py-3 rounded-lg font-bold mt-2 shadow-lg shadow-primary/20">Save Transaction</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-trip" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-card w-full max-w-md rounded-2xl border border-slate-700 shadow-2xl p-6 fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-white">Create New Trip</h3>
+                <button onclick="closeModal('trip')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <form id="form-trip" class="space-y-4">
+                <div>
+                    <label class="block text-xs text-textMuted mb-1">Trip Name</label>
+                    <input type="text" id="trip-name" placeholder="e.g. Trip to Ella" required class="w-full bg-dark border border-slate-600 rounded-lg px-3 py-2 text-white focus:border-primary focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs text-textMuted mb-1">Budget Allocation</label>
+                    <input type="number" id="trip-budget" placeholder="50000" required class="w-full bg-dark border border-slate-600 rounded-lg px-3 py-2 text-white focus:border-primary focus:outline-none font-bold">
+                </div>
+                <button type="submit" class="w-full bg-secondary hover:bg-indigo-600 text-white py-3 rounded-lg font-bold mt-2">Start Planning</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-saving" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-card w-full max-w-md rounded-2xl border border-slate-700 shadow-2xl p-6 fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-white">New Savings Goal</h3>
+                <button onclick="closeModal('saving')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <form id="form-saving" class="space-y-4">
+                <div>
+                    <label class="block text-xs text-textMuted mb-1">Goal Name</label>
+                    <input type="text" id="save-name" placeholder="e.g. New Laptop" required class="w-full bg-dark border border-slate-600 rounded-lg px-3 py-2 text-white focus:border-primary focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs text-textMuted mb-1">Target Amount</label>
+                    <input type="number" id="save-target" placeholder="200000" required class="w-full bg-dark border border-slate-600 rounded-lg px-3 py-2 text-white focus:border-primary focus:outline-none font-bold">
+                </div>
+                <button type="submit" class="w-full bg-info hover:bg-cyan-600 text-white py-3 rounded-lg font-bold mt-2">Create Goal</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-loan" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-card w-full max-w-md rounded-2xl border border-slate-700 shadow-2xl p-6 fade-in h-auto max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-white">Add Loan / Card</h3>
+                <button onclick="closeModal('loan')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <form id="form-loan" class="space-y-4">
+                <div>
+                    <label class="block text-xs text-textMuted mb-1">Name / Bank</label>
+                    <input type="text" id="loan-name" placeholder="e.g. HNB Personal Loan" required class="w-full bg-dark border border-slate-600 rounded-lg px-3 py-2 text-white focus:border-primary focus:outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-textMuted mb-1">Type</label>
+                        <select id="loan-type" class="w-full bg-dark border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:border-primary focus:outline-none">
+                            <option value="Personal Loan">Personal Loan</option>
+                            <option value="Credit Card">Credit Card</option>
+                            <option value="Vehicle Loan">Vehicle Loan</option>
+                            <option value="Mortgage">Mortgage</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-textMuted mb-1">Principal Amount</label>
+                        <input type="number" id="loan-amount" placeholder="Amount taken" required class="w-full bg-dark border border-slate-600 rounded-lg px-3 py-2 text-white focus:border-primary focus:outline-none font-bold">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-textMuted mb-1">Interest Rate (%) (Yearly)</label>
+                        <input type="number" id="loan-rate" step="0.1" placeholder="e.g. 18" required class="w-full bg-dark border border-slate-600 rounded-lg px-3 py-2 text-white focus:border-primary focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-textMuted mb-1">Duration (Months)</label>
+                        <input type="number" id="loan-months" placeholder="e.g. 24" required class="w-full bg-dark border border-slate-600 rounded-lg px-3 py-2 text-white focus:border-primary focus:outline-none">
+                    </div>
+                </div>
+                
+                <div class="p-3 bg-slate-800/50 rounded-lg border border-slate-700">
+                    <p class="text-xs text-textMuted">Estimated Monthly Installment:</p>
+                    <p class="text-lg font-bold text-purple" id="loan-calc-emi">0.00</p>
+                    <p class="text-xs text-textMuted mt-1">Total Payback: <span id="loan-calc-total">0.00</span></p>
+                </div>
+
+                <button type="button" onclick="calculatePreviewEMI()" class="w-full border border-slate-600 text-slate-300 hover:bg-slate-700 py-2 rounded-lg text-xs">Calculate Preview</button>
+                <button type="submit" class="w-full bg-purple hover:bg-purple-600 text-white py-3 rounded-lg font-bold mt-2 shadow-lg shadow-purple/20">Add Loan</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+                // --- DATA STRUCTURE & MIGRATION ---
+               // --- LANGUAGE DICTIONARY ---
+const translations = {
+    en: {
+        welcome: "Welcome Back",
+        subtitle: "Secure Personal Finance Management",
+        unlock: "Unlock Dashboard",
+        bio_unlock: "Unlock with Biometrics",
+        nav_dashboard: "Dashboard",
+        nav_wallet: "Transactions",
+        nav_loans: "Loans & Credit",
+        nav_trips: "Trip Planner",
+        nav_savings: "Savings Goals",
+        nav_reports: "Analytics",
+        nav_settings: "Settings",
+        nav_lock: "Lock App",
+        dash_title: "Dashboard",
+        dash_desc: "Overview of your financial health.",
+        btn_new_trans: "New Transaction",
+        total_balance: "Total Balance",
+        cash_hand: "Cash In Hand",
+        income: "Income",
+        accumulated: "Total Accumulated",
+        expenses: "Expenses",
+        budget_used: "of Budget used",
+        recent_activity: "Recent Activity",
+        view_all: "View All",
+        search_placeholder: "Search by note or category...",
+        start_date: "Start Date",
+        end_date: "End Date",
+        settings_title: "Settings",
+        curr_symbol: "Currency Symbol",
+        appearance: "Appearance",
+        light_mode: "Light Mode",
+        budget_limit: "Monthly Budget Limit",
+        app_security: "App Security",
+        enable_pin: "Enable PIN Protection",
+        bio_login: "Biometric Unlock",
+        change_pin: "Change PIN",
+        data_mgt: "Data Management",
+        language: "Language", // New key
+        select_lang: "Select Interface Language"
+    },
+    si: {
+        welcome: "නැවත පිළිගනිමු",
+        subtitle: "ආරක්ෂිත පුද්ගලික මූල්‍ය කළමනාකරණය",
+        unlock: "ඩෑෂ්බෝඩ් එක අරින්න",
+        bio_unlock: "ඇඟිලි සලකුණු මගින් අරින්න",
+        nav_dashboard: "මුල් පිටුව",
+        nav_wallet: "ගනුදෙනු",
+        nav_loans: "ණය සහ ක්‍රෙඩිට්",
+        nav_trips: "සංචාර සැලසුම්",
+        nav_savings: "ඉතිරිකිරීම්",
+        nav_reports: "වාර්තා",
+        nav_settings: "සැකසුම්",
+        nav_lock: "ඇප් එක ලොක් කරන්න",
+        dash_title: "මුල් පිටුව",
+        dash_desc: "ඔබගේ මූල්‍ය තත්ත්වය පිළිබඳ දළ විශ්ලේෂණය.",
+        btn_new_trans: "නව ගනුදෙනුවක්",
+        total_balance: "මුළු ශේෂය",
+        cash_hand: "අතේ ඇති මුදල්",
+        income: "ආදායම",
+        accumulated: "මුළු එකතුව",
+        expenses: "වියදම්",
+        budget_used: "අයවැයෙන් භාවිතා කළ ප්‍රමාණය",
+        recent_activity: "මෑත ක්‍රියාකාරකම්",
+        view_all: "සියල්ල බලන්න",
+        search_placeholder: "සටහන හෝ වර්ගය අනුව සොයන්න...",
+        start_date: "ආරම්භක දිනය",
+        end_date: "අවසන් දිනය",
+        settings_title: "සැකසුම්",
+        curr_symbol: "මුදල් ඒකකය",
+        appearance: "පෙනුම",
+        light_mode: "ලයිට් මෝඩ් (Light Mode)",
+        budget_limit: "මාසික අයවැය සීමාව",
+        app_security: "ආරක්ෂාව",
+        enable_pin: "PIN අංකය සක්‍රිය කරන්න",
+        bio_login: "Biometric ඇතුල්වීම",
+        change_pin: "PIN වෙනස් කරන්න",
+        data_mgt: "දත්ත කළමනාකරණය",
+        language: "භාෂාව",
+        select_lang: "භාෂාව තෝරන්න"
+    },
+    ta: {
+        welcome: "மீண்டும் வருக",
+        subtitle: "பாதுகாப்பான தனிப்பட்ட நிதி மேலாண்மை",
+        unlock: "திறக்கவும்",
+        bio_unlock: "கைரேகை மூலம் திறக்கவும்",
+        nav_dashboard: "முகப்பு",
+        nav_wallet: "பரிவர்த்தனைகள்",
+        nav_loans: "கடன்கள்",
+        nav_trips: "பயணத் திட்டம்",
+        nav_savings: "சேமிப்பு",
+        nav_reports: "பகுப்பாய்வு",
+        nav_settings: "அமைப்புகள்",
+        nav_lock: "பூட்டு",
+        dash_title: "முகப்பு",
+        dash_desc: "உங்கள் நிதி நிலைமை.",
+        btn_new_trans: "புதிய பரிவர்த்தனை",
+        total_balance: "மொத்த இருப்பு",
+        cash_hand: "கையில் பணம்",
+        income: "வருமானம்",
+        accumulated: "மொத்த திரட்டல்",
+        expenses: "செலவுகள்",
+        budget_used: "பட்ஜெட் பயன்படுத்தப்பட்டது",
+        recent_activity: "சமீபத்திய செயல்பாடு",
+        view_all: "அனைத்தையும் காண்க",
+        search_placeholder: "தேடவும்...",
+        start_date: "ஆரம்ப தேதி",
+        end_date: "கடைசி தேதி",
+        settings_title: "அமைப்புகள்",
+        curr_symbol: "நாணயம்",
+        appearance: "தோற்றம்",
+        light_mode: "லைட் மோட்",
+        budget_limit: "மாதாந்திர பட்ஜெட் வரம்பு",
+        app_security: "பாதுகாப்பு",
+        enable_pin: "PIN ஐ இயக்கு",
+        bio_login: "பயோமெட்ரிக் திறப்பு",
+        change_pin: "PIN ஐ மாற்றவும்",
+        data_mgt: "தரவு மேலாண்மை",
+        language: "மொழி",
+        select_lang: "மொழியைத் தேர்ந்தெடுக்கவும்"
+    },
+    hi: {
+        welcome: "वापसी पर स्वागत है",
+        subtitle: "सुरक्षित व्यक्तिगत वित्त प्रबंधन",
+        unlock: "डैशबोर्ड खोलें",
+        bio_unlock: "बायोमेट्रिक्स से खोलें",
+        nav_dashboard: "डैशबोर्ड",
+        nav_wallet: "लेन-देन",
+        nav_loans: "ऋण (Loans)",
+        nav_trips: "यात्रा योजना",
+        nav_savings: "बचत लक्ष्य",
+        nav_reports: "विश्लेषण",
+        nav_settings: "सेटिंग्स",
+        nav_lock: "ऐप लॉक करें",
+        dash_title: "डैशबोर्ड",
+        dash_desc: "आपकी वित्तीय स्थिति का अवलोकन।",
+        btn_new_trans: "नया लेन-देन",
+        total_balance: "कुल शेष",
+        cash_hand: "हाथ में नकदी",
+        income: "आय (Income)",
+        accumulated: "कुल जमा",
+        expenses: "व्यय (Expenses)",
+        budget_used: "बजट का उपयोग",
+        recent_activity: "हाल की गतिविधि",
+        view_all: "सभी देखें",
+        search_placeholder: "नोट या श्रेणी द्वारा खोजें...",
+        start_date: "आरंभ करने की तिथि",
+        end_date: "अंतिम तिथि",
+        settings_title: "सेटिंग्स",
+        curr_symbol: "मुद्रा प्रतीक",
+        appearance: "दिखावट",
+        light_mode: "लाइट मोड",
+        budget_limit: "मासिक बजट सीमा",
+        app_security: "ऐप सुरक्षा",
+        enable_pin: "पिन सक्षम करें",
+        bio_login: "बायोमेट्रिक अनलॉक",
+        change_pin: "पिन बदलें",
+        data_mgt: "डेटा प्रबंधन",
+        language: "भाषा",
+        select_lang: "भाषा चुनें"
+    }
+};
+ 
+        const defaultCategories = ['Food', 'Transport', 'Shopping', 'Bills', 'Entertainment', 'Salary', 'Health', 'Education', 'Loan Repayment', 'Other'];
+        
+        const defaultData = {
+            transactions: [],
+            trips: [], 
+            savings: [],
+            loans: [],
+            categories: defaultCategories,
+            settings: {
+                currency: 'LKR',
+                budget: 50000,
+                pin: btoa('1234'),
+                pinEnabled: false,
+                bioEnabled: false,
+                theme: 'dark' // මේක අලුතින් එකතු කළා
+            }
+        };
+
+        // Load data or set default
+        let appData = JSON.parse(localStorage.getItem('aloneMgtProV3')) || defaultData;
+
+// දැනට එඩිට් කරන Transaction එකේ ID එක තියාගන්න
+let editingTransactionId = null;
+
+        // Theme Migration (පරණ අයට theme එක සෙට් කිරීමට)
+        if(!appData.settings.theme) appData.settings.theme = 'dark';
+
+        // --- THEME LOGIC ---
+        function toggleTheme() {
+            const isLight = document.getElementById('set-theme-light').checked;
+            appData.settings.theme = isLight ? 'light' : 'dark';
+            saveData();
+            applyTheme();
+        }
+
+        function applyTheme() {
+            const isLight = appData.settings.theme === 'light';
+            if (isLight) {
+                document.body.classList.add('light-mode');
+                document.documentElement.classList.remove('dark');
+            } else {
+                document.body.classList.remove('light-mode');
+                document.documentElement.classList.add('dark');
+            }
+            const toggle = document.getElementById('set-theme-light');
+            if(toggle) toggle.checked = isLight;
+        }
+
+        // Migration for old versions
+        if(!appData.categories) appData.categories = defaultCategories;
+        if(!appData.savings) appData.savings = [];
+        if(!appData.loans) appData.loans = [];
+
+        // Check PIN format
+        if(appData.settings.pin.length === 4 && !isNaN(appData.settings.pin)) {
+            appData.settings.pin = btoa(appData.settings.pin);
+            localStorage.setItem('aloneMgtProV3', JSON.stringify(appData));
+        }
+
+        // --- AUTHENTICATION ---
+        const loginScreen = document.getElementById('login-screen');
+        const appContainer = document.getElementById('app-container');
+
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const input = document.getElementById('login-pin').value;
+            if(btoa(input) === appData.settings.pin) {
+                loginScreen.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                appContainer.classList.add('fade-in');
+                initApp();
+            } else {
+                const err = document.getElementById('login-error');
+                err.classList.remove('hidden');
+                err.classList.add('fade-in');
+                document.getElementById('login-pin').value = '';
+            }
+        });
+
+        function logout() {
+            location.reload();
+        }
+
+        // --- NAVIGATION ---
+        function nav(sectionId) {
+            document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+            const target = document.getElementById(sectionId);
+            target.classList.remove('hidden');
+            target.classList.add('fade-in');
+            
+            document.getElementById('mobile-menu').classList.add('hidden');
+            document.getElementById('mobile-menu').classList.remove('flex');
+
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            const navBtn = document.getElementById(`nav-${sectionId}`);
+            if(navBtn) navBtn.classList.add('active');
+
+            if(sectionId === 'reports') updateReports();
+            if(sectionId === 'wallet') renderTransactions();
+            if(sectionId === 'savings') renderSavings();
+            if(sectionId === 'trips') renderTrips();
+            if(sectionId === 'loans') renderLoans();
+        }
+
+        function toggleMobileMenu() {
+            const m = document.getElementById('mobile-menu');
+            if(m.classList.contains('hidden')) {
+                m.classList.remove('hidden');
+                m.classList.add('flex');
+            } else {
+                m.classList.add('hidden');
+                m.classList.remove('flex');
+            }
+        }
+
+        // --- CORE LOGIC ---
+
+                function initApp() {
+            // පවතින settings ලෝඩ් කිරීම
+            document.getElementById('set-currency').value = appData.settings.currency;
+            document.getElementById('set-budget').value = appData.settings.budget;
+            document.getElementById('set-pin-enabled').checked = appData.settings.pinEnabled;
+            document.getElementById('set-bio-enabled').checked = appData.settings.bioEnabled;
+
+            applyTheme(); // මේ පේළියෙන් තමයි ඇප් එක පටන් ගද්දීම Theme එක ඇප්ලයි කරන්නේ
+              // භාෂාව සෙට් කිරීම (Language Setup)
+            if(document.getElementById('set-language')) {
+                 document.getElementById('set-language').value = appData.settings.lang;
+            }
+            changeLanguage(appData.settings.lang);
+          
+            renderCategories();
+            updateUI();
+        }
+
+
+                    // --- LANGUAGE LOGIC ---
+        function changeLanguage(langKey) {
+            // ආරක්ෂාවට: භාෂාව ඩික්ෂනරියේ නැත්නම් ඉංග්‍රීසි වලට හරවන්න
+            if(!translations[langKey]) langKey = 'en';
+            
+            // Settings වලට සේව් කිරීම
+            appData.settings.lang = langKey;
+            saveData();
+
+            // HTML එකේ වචන මාරු කිරීම
+            document.querySelectorAll('[data-translate]').forEach(el => {
+                const key = el.getAttribute('data-translate');
+                if(translations[langKey][key]) {
+                    if(el.tagName === 'INPUT' && el.getAttribute('placeholder')) {
+                        el.placeholder = translations[langKey][key];
+                    } else {
+                        el.innerHTML = translations[langKey][key];
+                    }
+                }
+            });
+
+            // Dropdown එක අප්ඩේට් කිරීම
+            const langSelect = document.getElementById('set-language');
+            if(langSelect) langSelect.value = langKey;
+        }
+
+
+        function saveData() {
+            localStorage.setItem('aloneMgtProV3', JSON.stringify(appData));
+            updateUI();
+        }
+
+        function formatMoney(amount) {
+            return new Intl.NumberFormat('en-US', { 
+                style: 'currency', 
+                currency: appData.settings.currency 
+            }).format(amount);
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            let color = type === 'success' ? 'bg-success' : (type === 'error' ? 'bg-danger' : 'bg-primary');
+            let icon = type === 'success' ? 'fa-check' : (type === 'error' ? 'fa-circle-exclamation' : 'fa-info-circle');
+            toast.className = `${color} text-white px-6 py-3 rounded-lg shadow-xl flex items-center gap-3 min-w-[200px] toast`;
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span class="font-medium text-sm">${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
+        }
+
+        function renderCategories() {
+            const select = document.getElementById('t-category');
+            select.innerHTML = '';
+            appData.categories.forEach(cat => {
+                select.innerHTML += `<option value="${cat}">${cat}</option>`;
+            });
+            select.innerHTML += `<option value="NEW_CAT" class="font-bold text-primary">+ Custom Category</option>`;
+        }
+
+        document.getElementById('t-category').addEventListener('change', (e) => {
+            if(e.target.value === 'NEW_CAT') {
+                const newCat = prompt("Enter new category name:");
+                if(newCat && newCat.trim() !== "") {
+                    appData.categories.push(newCat);
+                    saveData();
+                    renderCategories();
+                    e.target.value = newCat;
+                } else {
+                    e.target.value = appData.categories[0];
+                }
+            }
+        });
+
+        function updateUI() {
+            let totalIncome = 0;
+            let totalExpense = 0;
+
+            appData.transactions.forEach(t => {
+                if(t.type === 'income') totalIncome += parseFloat(t.amount);
+                if(t.type === 'expense') totalExpense += parseFloat(t.amount);
+            });
+
+            const balance = totalIncome - totalExpense;
+            
+            document.getElementById('dash-balance').innerText = formatMoney(balance);
+            document.getElementById('dash-income').innerText = formatMoney(totalIncome);
+            document.getElementById('dash-expense').innerText = formatMoney(totalExpense);
+
+            const budgetLimit = appData.settings.budget;
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+
+            const monthExpense = appData.transactions.reduce((acc, t) => {
+                const d = new Date(t.date);
+                if(t.type === 'expense' && d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
+                    return acc + parseFloat(t.amount);
+                }
+                return acc;
+            }, 0);
+
+            const budgetPct = (monthExpense / budgetLimit) * 100;
+            const bar = document.getElementById('dash-expense-bar');
+            bar.style.width = `${Math.min(budgetPct, 100)}%`;
+            document.getElementById('dash-budget-status').innerText = `${Math.round(budgetPct)}% of Monthly Budget (${formatMoney(budgetLimit)})`;
+            bar.className = 'h-full transition-all duration-500 ' + (budgetPct > 90 ? 'bg-danger' : (budgetPct > 70 ? 'bg-warning' : 'bg-primary'));
+
+            renderTransactions();
+            renderTrips();
+            renderSavings();
+            renderLoans();
+        }
+
+       // --- UPDATED RENDER TRANSACTIONS WITH DATE FILTER ---
+function renderTransactions() {
+    const listRecent = document.getElementById('recent-list');
+    const listFull = document.getElementById('full-list');
+    
+    // Search Text එක ලබා ගැනීම
+    const searchVal = document.getElementById('search-tx').value.toLowerCase();
+    
+    // Date Inputs ලබා ගැනීම
+    const startDateVal = document.getElementById('filter-start').value;
+    const endDateVal = document.getElementById('filter-end').value;
+
+    // Trip Select එක Update කිරීම
+    const tripSelect = document.getElementById('t-trip-link');
+    if(tripSelect) {
+        tripSelect.innerHTML = '<option value="">-- Personal Wallet --</option>';
+        appData.trips.forEach(trip => { tripSelect.innerHTML += `<option value="trip-${trip.id}">Trip: ${trip.name}</option>`; });
+        appData.savings.forEach(sav => { tripSelect.innerHTML += `<option value="sav-${sav.id}">Save: ${sav.name}</option>`; });
+    }
+
+    if(listRecent) listRecent.innerHTML = '';
+    if(listFull) listFull.innerHTML = '';
+
+    // Data Sort කිරීම (අලුත්ම ඒවා උඩට)
+    const sorted = [...appData.transactions].sort((a,b) => new Date(b.date) - new Date(a.date));
+
+    // Filter Logic (Search + Date Range)
+    const filtered = sorted.filter(t => {
+        // 1. Search Text Check
+        const matchSearch = t.note.toLowerCase().includes(searchVal) || t.category.toLowerCase().includes(searchVal);
+
+        // 2. Date Range Check
+        let matchDate = true;
+        const tDate = new Date(t.date).setHours(0,0,0,0); 
+
+        if (startDateVal) {
+            const sDate = new Date(startDateVal).setHours(0,0,0,0);
+            if (tDate < sDate) matchDate = false; 
+        }
+        
+        if (endDateVal) {
+            const eDate = new Date(endDateVal).setHours(0,0,0,0);
+            if (tDate > eDate) matchDate = false; 
+        }
+
+        return matchSearch && matchDate;
+    });
+
+    // කිසිවක් හමු නොවුනේ නම්
+    if(filtered.length === 0) {
+        if(document.getElementById('dash-empty')) document.getElementById('dash-empty').classList.remove('hidden');
+        if(listFull) listFull.innerHTML = '<div class="text-center text-slate-500 py-12 border border-dashed border-slate-800 rounded-xl"><i class="fa-solid fa-filter text-3xl mb-2 opacity-50"></i><p>No transactions found in this range.</p></div>';
+    } else {
+        if(document.getElementById('dash-empty')) document.getElementById('dash-empty').classList.add('hidden');
+    }
+
+    // List එක Render කිරීම
+    filtered.forEach((t, i) => {
+        const isInc = t.type === 'income';
+        const dateStr = new Date(t.date).toLocaleDateString();
+        
+        let linkTag = '';
+        if(t.tripId) linkTag = `<span class="bg-secondary/20 text-secondary text-[10px] px-1.5 py-0.5 rounded ml-2"><i class="fa-solid fa-plane"></i> Trip</span>`;
+        if(t.saveId) linkTag = `<span class="bg-info/20 text-info text-[10px] px-1.5 py-0.5 rounded ml-2"><i class="fa-solid fa-piggy-bank"></i> Save</span>`;
+        if(t.loanId) linkTag = `<span class="bg-purple/20 text-purple text-[10px] px-1.5 py-0.5 rounded ml-2"><i class="fa-solid fa-credit-card"></i> Loan</span>`;
+
+        // Dashboard එකේ Recent List එකට (පළමු 5 පමනයි)
+        if(i < 5 && listRecent) {
+            listRecent.innerHTML += `
+                <tr class="hover:bg-slate-800/50 transition border-b border-slate-800 last:border-0">
+                    <td class="py-3 px-4 text-slate-400 text-xs">${dateStr}</td>
+                    <td class="py-3 px-4"><span class="px-2 py-1 rounded text-xs font-semibold ${isInc ? 'bg-success/10 text-success' : 'bg-slate-700 text-slate-300'}">${t.category}</span>${linkTag}</td>
+                    <td class="py-3 px-4 text-slate-300 truncate max-w-[150px]">${t.note}</td>
+                    <td class="py-3 px-4 text-right font-bold ${isInc ? 'text-success' : 'text-danger'}">${isInc ? '+' : '-'} ${formatMoney(t.amount)}</td>
+                </tr>
+            `;
+        }
+
+        // Wallet එකේ Full List එකට
+        if(listFull) {
+            listFull.innerHTML += `
+                <li class="bg-dark p-4 rounded-xl border border-slate-700 flex justify-between items-center group hover:border-slate-500 transition fade-in">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center ${isInc ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}">
+                            <i class="fa-solid ${isInc ? 'fa-arrow-down' : 'fa-arrow-up'}"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center flex-wrap gap-2">
+                                <p class="font-bold text-slate-200">${t.category}</p>
+                                ${linkTag}
+                                ${t.isRecurring ? '<span class="text-[10px] bg-slate-700 text-slate-300 px-1 rounded"><i class="fa-solid fa-arrows-rotate"></i> Recurring</span>' : ''}
+                            </div>
+                            <p class="text-xs text-slate-500">${dateStr} • ${t.note}</p>
+                        </div>
+                    </div>
+                   <div class="text-right">
+                        <p class="font-bold ${isInc ? 'text-success' : 'text-white'}">${isInc ? '+' : '-'} ${formatMoney(t.amount)}</p>
+                        
+                        <div class="flex items-center justify-end gap-4 mt-2">
+                            <button onclick="editTrans(${t.id})" class="text-sm text-primary hover:text-blue-400 transition transform hover:scale-110" title="Edit">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button onclick="deleteTrans(${t.id})" class="text-sm text-danger hover:text-red-500 transition transform hover:scale-110" title="Delete">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </li>
+            `;
+        }
+    });
+}
+
+// Clear Button Function එක
+function clearDateFilter() {
+    document.getElementById('filter-start').value = '';
+    document.getElementById('filter-end').value = '';
+    renderTransactions(); 
+}
+
+
+        // --- LOANS LOGIC (NEW) ---
+        function calculatePreviewEMI() {
+            const P = parseFloat(document.getElementById('loan-amount').value) || 0;
+            const r = parseFloat(document.getElementById('loan-rate').value) || 0;
+            const n = parseFloat(document.getElementById('loan-months').value) || 0;
+            
+            let emi = 0;
+            let total = 0;
+
+            if (P > 0 && n > 0) {
+                if (r === 0) {
+                    emi = P / n;
+                    total = P;
+                } else {
+                    const monthlyRate = r / (12 * 100);
+                    emi = (P * monthlyRate * Math.pow(1 + monthlyRate, n)) / (Math.pow(1 + monthlyRate, n) - 1);
+                    total = emi * n;
+                }
+            }
+            
+            document.getElementById('loan-calc-emi').innerText = formatMoney(emi);
+            document.getElementById('loan-calc-total').innerText = formatMoney(total);
+        }
+
+        function renderLoans() {
+            const grid = document.getElementById('loans-grid');
+            grid.innerHTML = '';
+            
+            let totalOutstanding = 0;
+            let totalMonthly = 0;
+
+            if(appData.loans.length === 0) {
+                document.getElementById('no-loans').classList.remove('hidden');
+            } else {
+                document.getElementById('no-loans').classList.add('hidden');
+                
+                appData.loans.forEach(loan => {
+                    const totalPayable = loan.monthlyInstallment * loan.months;
+                    const remaining = totalPayable - loan.paidAmount;
+                    const progress = (loan.paidAmount / totalPayable) * 100;
+                    const paidMonths = loan.paidMonths; // Directly use stored value
+                    const remainingMonths = loan.months - paidMonths;
+
+                    totalOutstanding += remaining;
+                    if(remaining > 0) totalMonthly += loan.monthlyInstallment;
+
+                    const isFullyPaid = remaining <= 1; // Tolerance
+
+                    grid.innerHTML += `
+                        <div class="bg-card p-6 rounded-2xl border ${isFullyPaid ? 'border-success/30' : 'border-slate-800'} relative group shadow-lg">
+                            <button onclick="deleteLoan(${loan.id})" class="absolute top-4 right-4 text-slate-600 hover:text-danger opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-trash"></i></button>
+                            
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center text-white text-xl shadow-lg shadow-purple/20">
+                                    <i class="fa-solid ${loan.type === 'Credit Card' ? 'fa-credit-card' : 'fa-building-columns'}"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-white text-lg">${loan.name}</h3>
+                                    <p class="text-xs text-textMuted">${loan.type} • ${loan.rate}% Interest</p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div class="bg-dark/50 p-3 rounded-lg border border-slate-700">
+                                    <p class="text-[10px] text-textMuted uppercase">Installment</p>
+                                    <p class="font-bold text-slate-200">${formatMoney(loan.monthlyInstallment)}</p>
+                                </div>
+                                <div class="bg-dark/50 p-3 rounded-lg border border-slate-700">
+                                    <p class="text-[10px] text-textMuted uppercase">Remaining</p>
+                                    <p class="font-bold ${remaining > 0 ? 'text-danger' : 'text-success'}">${formatMoney(remaining)}</p>
+                                </div>
+                            </div>
+
+                            <div class="mb-2 flex justify-between text-xs text-slate-400">
+                                <span>Paid: ${paidMonths}/${loan.months} Months</span>
+                                <span>${Math.round(progress)}% Done</span>
+                            </div>
+                            <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden mb-5 border border-slate-700">
+                                <div class="bg-success h-full transition-all duration-500" style="width: ${Math.min(progress, 100)}%"></div>
+                            </div>
+
+                            ${!isFullyPaid ? `
+                            <button onclick="payLoanInstallment(${loan.id})" class="w-full bg-slate-700 hover:bg-success hover:text-white text-slate-300 py-3 rounded-lg font-bold transition flex justify-center items-center gap-2 group-hover:shadow-lg">
+                                <i class="fa-solid fa-check-circle"></i> Pay Installment
+                            </button>
+                            ` : `<div class="text-center text-success font-bold py-2 bg-success/10 rounded-lg">Loan Fully Paid! 🎉</div>`}
+                        </div>
+                    `;
+                });
+            }
+            
+            document.getElementById('loan-total-debt').innerText = formatMoney(totalOutstanding);
+            document.getElementById('loan-monthly-liability').innerText = formatMoney(totalMonthly);
+        }
+
+        document.getElementById('form-loan').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const P = parseFloat(document.getElementById('loan-amount').value);
+            const r = parseFloat(document.getElementById('loan-rate').value);
+            const n = parseFloat(document.getElementById('loan-months').value);
+            
+            // Calculate EMI to store it fixed
+            let emi = 0;
+            if (r === 0) emi = P / n;
+            else {
+                const monthlyRate = r / (12 * 100);
+                emi = (P * monthlyRate * Math.pow(1 + monthlyRate, n)) / (Math.pow(1 + monthlyRate, n) - 1);
+            }
+
+            appData.loans.push({
+                id: Date.now(),
+                name: document.getElementById('loan-name').value,
+                type: document.getElementById('loan-type').value,
+                amount: P,
+                rate: r,
+                months: n,
+                monthlyInstallment: emi,
+                paidAmount: 0,
+                paidMonths: 0,
+                startDate: new Date().toISOString()
+            });
+
+            saveData();
+            closeModal('loan');
+            e.target.reset();
+            showToast('Loan added successfully!');
+        });
+
+        function payLoanInstallment(id) {
+            const loan = appData.loans.find(l => l.id === id);
+            if(!loan) return;
+
+            if(confirm(`Pay Installment of ${formatMoney(loan.monthlyInstallment)} for ${loan.name}? This will be deducted from your Wallet.`)) {
+                // 1. Add Transaction
+                appData.transactions.push({
+                    id: Date.now(),
+                    date: new Date().toISOString(),
+                    type: 'expense',
+                    amount: loan.monthlyInstallment,
+                    category: 'Loan Repayment',
+                    note: `Installment: ${loan.name}`,
+                    tripId: null,
+                    saveId: null,
+                    loanId: loan.id, // Link to loan
+                    isRecurring: false
+                });
+
+                // 2. Update Loan Status
+                loan.paidAmount += loan.monthlyInstallment;
+                loan.paidMonths += 1;
+
+                saveData();
+                showToast('Installment Paid & Recorded!');
+            }
+        }
+
+        function deleteLoan(id) {
+            if(confirm('Delete this loan record? Past transactions will remain.')) {
+                appData.loans = appData.loans.filter(l => l.id !== id);
+                saveData();
+                showToast('Loan deleted.', 'error');
+            }
+        }
+
+        // --- TRIPS & SAVINGS (EXISTING) ---
+        function renderTrips() {
+            const grid = document.getElementById('trips-grid');
+            grid.innerHTML = '';
+            
+            if(appData.trips.length === 0) {
+                document.getElementById('no-trips').classList.remove('hidden');
+            } else {
+                document.getElementById('no-trips').classList.add('hidden');
+                appData.trips.forEach(trip => {
+                    const spent = appData.transactions.filter(t => t.tripId == trip.id && t.type === 'expense').reduce((acc, t) => acc + parseFloat(t.amount), 0);
+                    const remaining = trip.budget - spent;
+                    const progress = (spent / trip.budget) * 100;
+                    let colorClass = progress > 90 ? 'bg-danger' : (progress > 70 ? 'bg-warning' : 'bg-secondary');
+
+                    grid.innerHTML += `
+                        <div class="bg-card p-6 rounded-2xl border border-slate-800 relative group transition hover:border-slate-600 shadow-lg">
+                            <button onclick="deleteTrip(${trip.id})" class="absolute top-4 right-4 text-slate-600 hover:text-danger opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-trash"></i></button>
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-12 h-12 bg-gradient-to-br from-secondary to-purple-600 rounded-xl flex items-center justify-center text-white text-xl shadow-lg shadow-secondary/20"><i class="fa-solid fa-map-location"></i></div>
+                                <div><h3 class="font-bold text-white text-lg">${trip.name}</h3><p class="text-xs text-textMuted">Budget: ${formatMoney(trip.budget)}</p></div>
+                            </div>
+                            <div class="mb-2 flex justify-between text-sm"><span class="text-slate-400">Spent: <span class="text-white">${formatMoney(spent)}</span></span><span class="${remaining < 0 ? 'text-danger' : 'text-success'} font-bold">${formatMoney(remaining)} Left</span></div>
+                            <div class="w-full bg-slate-900 h-3 rounded-full overflow-hidden mb-4 border border-slate-700"><div class="${colorClass} h-full transition-all duration-500" style="width: ${Math.min(progress, 100)}%"></div></div>
+                            <button onclick="quickAdd('trip', ${trip.id})" class="w-full py-2 rounded-lg border border-slate-700 text-slate-300 text-sm hover:bg-slate-700 hover:text-white transition flex justify-center items-center gap-2"><i class="fa-solid fa-plus-circle"></i> Add Expense</button>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+                function renderSavings() {
+            const grid = document.getElementById('savings-grid');
+            grid.innerHTML = '';
+            
+            if(appData.savings.length === 0) {
+                document.getElementById('no-savings').classList.remove('hidden');
+            } else {
+                document.getElementById('no-savings').classList.add('hidden');
+                appData.savings.forEach(sav => {
+                    
+                    // වෙනස් කළ කොටස: මෙතන තිබුන '&& t.type === expense' කෑල්ල අයින් කළා.
+                    // දැන් උඹ Income දැම්මත් Expense දැම්මත් ඒක Savings එකට එකතු වෙනවා.
+                    const saved = appData.transactions
+                        .filter(t => t.saveId == sav.id) 
+                        .reduce((acc, t) => acc + parseFloat(t.amount), 0);
+
+                    const progress = (saved / sav.target) * 100;
+
+                    grid.innerHTML += `
+                        <div class="bg-card p-6 rounded-2xl border border-slate-800 relative group transition hover:border-slate-600 shadow-lg">
+                            <button onclick="deleteSaving(${sav.id})" class="absolute top-4 right-4 text-slate-600 hover:text-danger opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-trash"></i></button>
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-12 h-12 bg-gradient-to-br from-info to-blue-600 rounded-xl flex items-center justify-center text-white text-xl shadow-lg shadow-info/20"><i class="fa-solid fa-bullseye"></i></div>
+                                <div><h3 class="font-bold text-white text-lg">${sav.name}</h3><p class="text-xs text-textMuted">Goal: ${formatMoney(sav.target)}</p></div>
+                            </div>
+                            <div class="mb-2 flex justify-between text-sm"><span class="text-slate-400">Saved: <span class="text-success font-bold">${formatMoney(saved)}</span></span><span class="text-slate-500">${Math.round(progress)}%</span></div>
+                            <div class="w-full bg-slate-900 h-3 rounded-full overflow-hidden mb-4 border border-slate-700"><div class="bg-info h-full transition-all duration-500" style="width: ${Math.min(progress, 100)}%"></div></div>
+                            <button onclick="quickAdd('sav', ${sav.id})" class="w-full py-2 rounded-lg border border-slate-700 text-slate-300 text-sm hover:bg-slate-700 hover:text-white transition flex justify-center items-center gap-2"><i class="fa-solid fa-coins"></i> Add Contribution</button>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+
+        // --- ACTIONS ---
+
+    document.getElementById('form-trans').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const type = document.querySelector('input[name="t-type"]:checked').value;
+    const amount = parseFloat(document.getElementById('t-amount').value);
+    const category = document.getElementById('t-category').value;
+    const note = document.getElementById('t-note').value;
+    const linkVal = document.getElementById('t-trip-link').value;
+    const isRecurring = document.getElementById('t-recurring').checked;
+
+    const dateVal = document.getElementById('t-date').value;
+    const timeVal = document.getElementById('t-time').value;
+
+    let finalDateTime;
+    if(dateVal && timeVal) {
+        finalDateTime = new Date(`${dateVal}T${timeVal}`);
+    } else {
+        finalDateTime = new Date();
+    }
+
+    let tripId = null;
+    let saveId = null;
+    
+    if(linkVal.startsWith('trip-')) tripId = parseInt(linkVal.split('-')[1]);
+    if(linkVal.startsWith('sav-')) saveId = parseInt(linkVal.split('-')[1]);
+
+    // --- මෙන්න මේ කොටස තමයි වෙනස් කළේ ---
+    if (editingTransactionId) {
+        // Edit කරන අවස්ථාව
+        const index = appData.transactions.findIndex(t => t.id === editingTransactionId);
+        if (index !== -1) {
+            appData.transactions[index] = {
+                id: editingTransactionId, // පරණ ID එකම තියන්න
+                date: finalDateTime.toISOString(),
+                type, amount, category, note, tripId, saveId, isRecurring
+            };
+            showToast('Transaction Updated!');
+        }
+        editingTransactionId = null; // Reset
+    } else {
+        // අලුත් Transaction එකක්
+        const newTx = {
+            id: Date.now(),
+            date: finalDateTime.toISOString(),
+            type, amount, category, note, tripId, saveId, isRecurring
+        };
+        appData.transactions.push(newTx);
+        showToast('Transaction Saved!');
+    }
+    // ----------------------------------------
+
+    saveData();
+    closeModal('transaction');
+});
+
+        document.getElementById('form-trip').addEventListener('submit', (e) => {
+            e.preventDefault();
+            appData.trips.push({
+                id: Date.now(),
+                name: document.getElementById('trip-name').value,
+                budget: parseFloat(document.getElementById('trip-budget').value)
+            });
+            saveData();
+            closeModal('trip');
+            e.target.reset();
+            showToast('Trip plan created!');
+        });
+
+        document.getElementById('form-saving').addEventListener('submit', (e) => {
+            e.preventDefault();
+            appData.savings.push({
+                id: Date.now(),
+                name: document.getElementById('save-name').value,
+                target: parseFloat(document.getElementById('save-target').value)
+            });
+            saveData();
+            closeModal('saving');
+            e.target.reset();
+            showToast('Savings goal created!');
+        });
+// පරණ closeModal එක මකා දමා, පහත කොටස ඇතුළත් කරන්න:
+
+function editTrans(id) {
+    const tx = appData.transactions.find(t => t.id === id);
+    if (!tx) return;
+
+    editingTransactionId = id; // එඩිට් කරන ID එක සේව් කරගන්නවා
+    openModal('transaction'); // Form එක ඕපන් කරනවා
+
+    // Form එකේ තියෙන ෆීල්ඩ් වලට පරණ ඩේටා ටික දානවා
+    document.getElementById('t-amount').value = tx.amount;
+    document.getElementById('t-note').value = tx.note;
+    document.getElementById('t-category').value = tx.category;
+    document.getElementById('t-recurring').checked = tx.isRecurring;
+    
+    // Type එක (Income/Expense) සිලෙක්ට් කරනවා
+    const radios = document.getElementsByName('t-type');
+    radios.forEach(r => {
+        if(r.value === tx.type) r.checked = true;
+    });
+
+    // Date සහ Time වෙන් කරලා ගන්නවා
+    const dateObj = new Date(tx.date);
+    
+    // Date (YYYY-MM-DD)
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    document.getElementById('t-date').value = `${year}-${month}-${day}`;
+
+    // Time (HH:MM)
+    const hours = String(dateObj.getHours()).padStart(2, '0');
+    const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+    document.getElementById('t-time').value = `${hours}:${minutes}`;
+
+    // Trip හෝ Savings ලින්ක් වෙලා නම් ඒක සිලෙක්ට් කරනවා
+    if (tx.tripId) document.getElementById('t-trip-link').value = `trip-${tx.tripId}`;
+    else if (tx.saveId) document.getElementById('t-trip-link').value = `sav-${tx.saveId}`;
+    else document.getElementById('t-trip-link').value = "";
+
+    // Save බට්න් එකේ නම වෙනස් කරනවා
+    const btn = document.querySelector('#form-trans button[type="submit"]');
+    if(btn) btn.innerText = "Update Transaction";
+}
+
+function closeModal(type) {
+    document.getElementById(`modal-${type}`).classList.add('hidden');
+    document.getElementById(`modal-${type}`).classList.remove('flex');
+    
+    // Transaction Modal එක වැහුවොත් විතරක් මේක රීසෙට් කරනවා
+    if(type === 'transaction') {
+        editingTransactionId = null;
+        const btn = document.querySelector('#form-trans button[type="submit"]');
+        if(btn) btn.innerText = "Save Transaction";
+        document.getElementById('form-trans').reset();
+    }
+}
+
+        function deleteTrans(id) {
+            if(confirm('Delete this transaction?')) {
+                appData.transactions = appData.transactions.filter(t => t.id !== id);
+                saveData();
+                showToast('Transaction deleted.', 'error');
+            }
+        }
+        function deleteTrip(id) {
+            if(confirm('Delete trip? Data remains.')) {
+                appData.trips = appData.trips.filter(t => t.id !== id);
+                saveData();
+                showToast('Trip deleted.', 'error');
+            }
+        }
+        function deleteSaving(id) {
+            if(confirm('Delete goal? Data remains.')) {
+                appData.savings = appData.savings.filter(t => t.id !== id);
+                saveData();
+                showToast('Goal deleted.', 'error');
+            }
+        }
+        function quickAdd(type, id) {
+            openModal('transaction');
+            document.getElementById('t-trip-link').value = `${type}-${id}`;
+        }
+
+        // --- BACKUP & RESTORE ---
+        function exportJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData));
+            const a = document.createElement('a');
+            a.href = dataStr;
+            a.download = `AloneMgt_Backup_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+        }
+
+        function importData() {
+            const fileInput = document.getElementById('import-file');
+            const file = fileInput.files[0];
+            if(!file) { showToast('Please select a JSON file', 'error'); return; }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if(imported.transactions && imported.settings) {
+                        localStorage.setItem('aloneMgtProV3', JSON.stringify(imported));
+                        alert('Data Restored Successfully! App will reload.');
+                        location.reload();
+                    } else {
+                        showToast('Invalid file format', 'error');
+                    }
+                } catch(err) {
+                    showToast('Error parsing file', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function exportData() {
+            let csv = "Date,Type,Category,Amount,Link,Note\n";
+            appData.transactions.forEach(t => {
+                let linkName = "";
+                if(t.tripId) linkName = "Trip: " + (appData.trips.find(tr => tr.id == t.tripId)?.name || "");
+                if(t.saveId) linkName = "Save: " + (appData.savings.find(s => s.id == t.saveId)?.name || "");
+                if(t.loanId) linkName = "Loan: " + (appData.loans.find(l => l.id == t.loanId)?.name || "");
+                csv += `${new Date(t.date).toLocaleDateString()},${t.type},${t.category},${t.amount},${linkName},${t.note}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'AloneMgt_Data.csv';
+            a.click();
+        }
+
+        function clearData() {
+            if(confirm("WARNING: This will delete ALL data locally. Make sure to Backup first!")) {
+                localStorage.removeItem('aloneMgtProV3');
+                location.reload();
+            }
+        }
+
+        document.getElementById('form-change-pin').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const current = document.getElementById('pin-current').value;
+            const newPin = document.getElementById('pin-new').value;
+            const confirmPin = document.getElementById('pin-confirm').value;
+
+            if(btoa(current) !== appData.settings.pin) {
+                showToast('Current PIN is incorrect!', 'error');
+                return;
+            }
+            if(newPin.length < 4 || newPin !== confirmPin) {
+                showToast('Invalid or Mismatching PINs.', 'error');
+                return;
+            }
+            appData.settings.pin = btoa(newPin);
+            saveData();
+            document.getElementById('form-change-pin').reset();
+            showToast('PIN Updated Securely!');
+        });
+
+        document.getElementById('set-currency').addEventListener('change', (e) => {
+            appData.settings.currency = e.target.value; saveData();
+        });
+        document.getElementById('set-budget').addEventListener('change', (e) => {
+            appData.settings.budget = e.target.value; saveData();
+        });
+
+       function openModal(type) {
+    document.getElementById(`modal-${type}`).classList.remove('hidden');
+    document.getElementById(`modal-${type}`).classList.add('flex');
+    
+    if(type === 'transaction') {
+        renderCategories();
+        
+        // --- අද දිනය සහ වේලාව Auto Set කිරීම ---
+        const now = new Date();
+        
+        // Date එක (YYYY-MM-DD)
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        
+        // Date Input එක තිබේනම් පමණක් අගය දමන්න
+        const dateInput = document.getElementById('t-date');
+        if(dateInput) dateInput.value = `${year}-${month}-${day}`;
+
+        // Time එක (HH:MM)
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        
+        // Time Input එක තිබේනම් පමණක් අගය දමන්න
+        const timeInput = document.getElementById('t-time');
+        if(timeInput) timeInput.value = `${hours}:${minutes}`;
+    }
+}
+
+        function closeModal(type) {
+            document.getElementById(`modal-${type}`).classList.add('hidden');
+            document.getElementById(`modal-${type}`).classList.remove('flex');
+        }
+
+        // --- REPORTS ---
+        let pieInst = null, barInst = null;
+        function updateReports() {
+            const range = document.getElementById('report-range').value;
+            const ctxPie = document.getElementById('chartPie').getContext('2d');
+            const ctxBar = document.getElementById('chartBar').getContext('2d');
+
+            const now = new Date();
+            let filteredTx = appData.transactions.filter(t => {
+                const d = new Date(t.date);
+                if(range === 'this_month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                if(range === 'last_month') return d.getMonth() === now.getMonth() - 1;
+                if(range === 'last_7') {
+                    const past = new Date(); past.setDate(now.getDate() - 7);
+                    return d >= past;
+                }
+                if(range === 'last_3m') {
+                    const past = new Date(); past.setMonth(now.getMonth() - 3);
+                    return d >= past;
+                }
+                return true; 
+            });
+
+            // Pie
+            const cats = {};
+            filteredTx.filter(t => t.type === 'expense').forEach(t => { cats[t.category] = (cats[t.category] || 0) + parseFloat(t.amount); });
+            if(pieInst) pieInst.destroy();
+            pieInst = new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(cats),
+                    datasets: [{ data: Object.values(cats), backgroundColor: ['#3b82f6','#ef4444','#10b981','#f59e0b','#6366f1','#8b5cf6','#ec4899','#14b8a6'], borderWidth: 0 }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#94a3b8', font: {family: 'Outfit'} } } } }
+            });
+
+            // Bar
+            const income = filteredTx.filter(t => t.type === 'income').reduce((a, b) => a + parseFloat(b.amount), 0);
+            const expense = filteredTx.filter(t => t.type === 'expense').reduce((a, b) => a + parseFloat(b.amount), 0);
+            if(barInst) barInst.destroy();
+            barInst = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: ['Income', 'Expense'],
+                    datasets: [{ label: 'Amount', data: [income, expense], backgroundColor: ['#10b981', '#ef4444'], borderRadius: 6, barThickness: 50 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }, x: { ticks: { color: '#94a3b8' }, grid: { display: false } } }, plugins: { legend: { display: false } } }
+            });
+        }
+                   // --- SECURITY LOGIC (UPDATED WITH BIOMETRICS) ---
+
+        // 1. Biometric Credential හදන්න (Register)
+        async function registerBiometric() {
+            if (!window.PublicKeyCredential) {
+                showToast("Biometrics not supported on this device/browser.", "error");
+                return false;
+            }
+
+            const challenge = new Uint8Array(32);
+            window.crypto.getRandomValues(challenge);
+
+            const publicKey = {
+                challenge: challenge,
+                rp: { name: "Alone Management Pro", id: window.location.hostname },
+                user: {
+                    id: new Uint8Array(16),
+                    name: "User",
+                    displayName: "AloneMgt User"
+                },
+                pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
+                authenticatorSelection: { 
+                    authenticatorAttachment: "platform",
+                    userVerification: "required" 
+                },
+                timeout: 60000,
+                attestation: "none"
+            };
+
+            try {
+                await navigator.credentials.create({ publicKey });
+                return true;
+            } catch (err) {
+                console.error(err);
+                if(err.name === "NotAllowedError") {
+                    showToast("Biometric access denied or cancelled.", "error");
+                } else {
+                    showToast("Biometric registration failed.", "error");
+                }
+                return false;
+            }
+        }
+
+        // 2. Biometric පරීක්ෂා කිරීම (Login)
+        async function verifyBiometric() {
+            if (!window.PublicKeyCredential) return;
+
+            const challenge = new Uint8Array(32);
+            window.crypto.getRandomValues(challenge);
+
+            const publicKey = {
+                challenge: challenge,
+                rpId: window.location.hostname,
+                userVerification: "required",
+                timeout: 60000
+            };
+
+            try {
+                const assertion = await navigator.credentials.get({ publicKey });
+                if (assertion) {
+                    unlockApp();
+                }
+            } catch (err) {
+                console.error("Biometric failed", err);
+                showToast("Biometric verification failed. Use PIN.", "error");
+            }
+        }
+
+        // App එක Unlock කරන පොදු Function එක
+        function unlockApp() {
+            const loginScreen = document.getElementById('login-screen');
+            const appContainer = document.getElementById('app-container');
+            
+            loginScreen.classList.add('hidden');
+            appContainer.classList.remove('hidden');
+            appContainer.classList.add('fade-in');
+            initApp();
+        }
+
+        // Initial check එක (App එක open වෙද්දි)
+        function checkInitialAuth() {
+            const loginScreen = document.getElementById('login-screen');
+            const appContainer = document.getElementById('app-container');
+            const bioBtn = document.getElementById('btn-bio-unlock');
+
+            if (appData.settings.bioEnabled) {
+                bioBtn.classList.remove('hidden');
+            } else {
+                bioBtn.classList.add('hidden');
+            }
+
+            if (appData.settings.pinEnabled || appData.settings.bioEnabled) {
+                loginScreen.classList.remove('hidden');
+                appContainer.classList.add('hidden');
+            } else {
+                loginScreen.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                initApp();
+            }
+        }
+
+        // Settings වල Checkbox එක වෙනස් කරද්දි
+        async function toggleSecurity(type) {
+            const checkBox = document.getElementById(type === 'pin' ? 'set-pin-enabled' : 'set-bio-enabled');
+            
+            if (type === 'pin') {
+                appData.settings.pinEnabled = checkBox.checked;
+                saveData();
+                showToast(`PIN Security ${checkBox.checked ? 'Enabled' : 'Disabled'}`);
+            } 
+            else if (type === 'bio') {
+                if (checkBox.checked) {
+                    const success = await registerBiometric();
+                    if (success) {
+                        appData.settings.bioEnabled = true;
+                        showToast("Biometric Login Enabled! 🎉");
+                    } else {
+                        checkBox.checked = false;
+                        appData.settings.bioEnabled = false;
+                    }
+                } else {
+                    appData.settings.bioEnabled = false;
+                    showToast("Biometric Login Disabled");
+                }
+                saveData();
+            }
+        }
+
+        // PIN Form Event Listener
+        const loginForm = document.getElementById('login-form');
+        // පරණ listener එක අයින් කරන්න බැරි නිසා අලුත් එකක් clone කරලා දාමු (To prevent duplicates)
+        const newLoginForm = loginForm.cloneNode(true);
+        loginForm.parentNode.replaceChild(newLoginForm, loginForm);
+
+        newLoginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const input = document.getElementById('login-pin').value;
+            if(btoa(input) === appData.settings.pin) {
+                unlockApp();
+            } else {
+                const err = document.getElementById('login-error');
+                err.classList.remove('hidden');
+                err.classList.add('fade-in');
+                document.getElementById('login-pin').value = '';
+            }
+        });
+
+        // Initialize
+        checkInitialAuth();
+   
+        async function downloadReportPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const reportSection = document.getElementById('reports');
+    const rangeText = document.getElementById('report-range').options[document.getElementById('report-range').selectedIndex].text;
+
+    // Loading Toast එකක් පෙන්වමු
+    showToast('Generating PDF... Please wait.', 'info');
+
+    try {
+        // PDF එකේ Header එක නිර්මාණය කිරීම
+        doc.setFillColor(11, 14, 20); // Dark background
+        doc.rect(0, 0, 210, 40, 'F');
+        
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(22);
+        doc.text("ALONE MANAGEMENT - REPORT", 15, 20);
+        
+        doc.setFontSize(10);
+        doc.setTextColor(148, 163, 184);
+        doc.text(`Report Period: ${rangeText}`, 15, 28);
+        doc.text(`Generated on: ${new Date().toLocaleString()}`, 15, 33);
+
+        // Summary Data (Income/Expense) ඇතුළත් කිරීම
+        const income = document.getElementById('dash-income').innerText;
+        const expense = document.getElementById('dash-expense').innerText;
+        const balance = document.getElementById('dash-balance').innerText;
+
+        doc.setTextColor(30, 41, 59);
+        doc.setFontSize(12);
+        doc.text(`Total Income: ${income}`, 15, 55);
+        doc.text(`Total Expense: ${expense}`, 15, 62);
+        doc.text(`Current Balance: ${balance}`, 15, 69);
+        
+        doc.setDrawColor(226, 232, 240);
+        doc.line(15, 75, 195, 75);
+
+        // Charts Capture කිරීම (html2canvas භාවිතා කර)
+        // මුලින්ම Spending by Category Chart එක
+        const chart1 = await html2canvas(document.getElementById('chartPie').parentElement);
+        const imgData1 = chart1.toDataURL('image/png');
+        doc.text("Spending by Category", 15, 85);
+        doc.addImage(imgData1, 'PNG', 15, 90, 80, 80);
+
+        // දෙවනුව Income vs Expense Chart එක
+        const chart2 = await html2canvas(document.getElementById('chartBar').parentElement);
+        const imgData2 = chart2.toDataURL('image/png');
+        doc.text("Income vs Expense Trend", 110, 85);
+        doc.addImage(imgData2, 'PNG', 110, 95, 85, 60);
+
+        // PDF එක Save කිරීම
+        doc.save(`AloneMgt_Report_${new Date().toISOString().slice(0,10)}.pdf`);
+        showToast('PDF Downloaded Successfully!');
+
+    } catch (error) {
+        console.error(error);
+        showToast('Error generating PDF', 'error');
+    }
+}
+ 
+  </script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(reg => console.log('Service Worker Registered!'))
+        .catch(err => console.log('Service Worker Error', err));
+    });
+  }
+</script>
+</body>
+</html>

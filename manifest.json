@@ -1,0 +1,17 @@
+{
+  "name": "Alone Management Pro Finance",
+  "short_name": "AloneMgt",
+  "description": "Secure Personal Finance Management by Akarshana",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#0b0e14",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "https://files.catbox.moe/lelq4r.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
